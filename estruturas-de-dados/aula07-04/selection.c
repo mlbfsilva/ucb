@@ -1,0 +1,47 @@
+#include <stdio.h>
+
+void selection(int * v, int size)
+{
+    int menor = v[0];
+    int pos = 0;
+
+    if (size < 2)
+    {
+        return;
+    }
+
+    for (int i = 1; i < size; i++)
+    {
+        if (v[i] < menor)
+        {
+            menor = v[i];
+            pos = i;
+        }
+    }
+
+    if (pos != 0)
+    {
+        int transferencia = v[0];
+        v[0] = v[pos];
+        v[pos] = transferencia;
+    }
+
+    selection(&v[1], size - 1);
+}
+
+
+int main()
+{
+    int vetor[] = {10, -8, -78, 91, 1, 9, 0};
+    int len = sizeof(vetor)/sizeof(vetor[0]);
+
+    selection(vetor, len);
+
+    printf("\r\n");
+    for (int i = 0; i < len; i++)
+    {
+        printf("%2d ", vetor[i]);
+    }
+
+    return 0;
+}
