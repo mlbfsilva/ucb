@@ -50,7 +50,7 @@ int main(){
     converterData(data);
     time_t dia_usuario = converterData(data); // :(
 
-    FILE *arquivo = fopen("sensores_novo.csv", "w");
+    FILE *arquivo = fopen("sensores_novo.txt", "w");
     if (arquivo == NULL) {
         printf("Erro ao criar o arquivo!\n");
         return 1;
