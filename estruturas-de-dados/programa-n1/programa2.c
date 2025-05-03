@@ -3,7 +3,6 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
-#include <limits.h>
 
 #define SENSOR 5
 #define MAX_SENSORES 5000
