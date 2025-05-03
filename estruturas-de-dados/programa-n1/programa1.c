@@ -16,13 +16,14 @@ typedef struct {
     Leitura_sensor * leituras;
 } Sensores;
 
-int encontrar_sensores(Sensores sensores[], int *n, const char *id){
-    for(int i = 0; i < *n; i++){
+int encontrar_sensores(Sensores sensores[], int n, const char *id){
+    for(int i = 0; i < n; i++){
         if(strcmp(sensores[i].id_sensor, id)==0)
         return i;
     }
     return -1;
 }
+
 
 void ordenar_sensores_timestamp(Leitura_sensor *leituras, int size){
     int i;
@@ -51,11 +52,11 @@ int main(){
     FILE *arquivo = fopen("sensores_novo.txt", "r");
     if (arquivo == NULL){
         printf("Erro ao abrir arquivo\n");
-        return; 
+        return -1; 
     }
-    
+
     Sensores sensores[MAX_LINHAS];
-    int total_sensores =0;
+    int total_sensores =5000;
 
     char linha[MAX_LINHAS];
     while (fgets(linha, sizeof(linha), arquivo)){
@@ -73,9 +74,9 @@ int main(){
         ordenar_sensores_timestamp(sensores[i].leituras, sensores[i].count);
 
         char nome_arquvo_novo[5];
-        sprintf(nome_arquvo_novo, sizeof(nome_arquvo_novo), "%s.txt", sensores[i].id_sensor);
+        sprintf(nome_arquvo_novo, "%s.txt", sensores[i].id_sensor);
 
-        FILE *arquivo_saida = fopen (nome_arquvo_novo, "w");
+        FILE *arquivo_saida = fopen (nome_arquvo_novo, "w+");
         if (arquivo_saida = NULL){
             printf ("Erro ao tentar gerar novo arquivo");
             continue;
