@@ -1,91 +1,124 @@
 #include <stdio.h>
 #include <stdlib.h> 
-#include <time.h> 
 #include <string.h>
+#include <locale.h>
 
-#define MAX_LINHAS 5000
+#define NOME_ARQUIVO 50
+#define SENSOR 5
 
 typedef struct {
+    char id_sensor[SENSOR];
     long long timestamp;
     float valor;
-} Leitura_sensor;
-
-typedef struct {
-    char id_sensor[5];
-    int count;
-    Leitura_sensor * leituras;
 } Sensores;
 
-int encontrar_sensores(Sensores sensores[], int n, const char *id){
-    for(int i = 0; i < n; i++){
-        if(strcmp(sensores[i].id_sensor, id)==0)
-        return i;
+void abrir_arquivo(const char *arq_nome, int n_linhas, Sensores *sensor){
+    FILE *arquivo_entrada = fopen(arq_nome, "r");
+    if (arquivo_entrada == NULL){
+        printf("Erro ao abrir arquivo.\n");
+        return;
     }
-    return -1;
+
+    Sensores temp;
+    int i = 0;
+    while (i < n_linhas &&
+        fscanf(arquivo_entrada, "%4[^;];%lld;%f\n", temp.id_sensor, &temp.timestamp, &temp.valor) == 3){
+        sensor[i] = temp;
+        i++;
+    }
+    fclose(arquivo_entrada);
 }
 
-
-void ordenar_sensores_timestamp(Leitura_sensor *leituras, int size){
-    int i;
-    int j;
-    int indx;
-
-    Leitura_sensor temp;
-
-    for(i =0; i < size; i++){
-        indx = i;
-        for(j = i+1; j < size; j++){
-            if(leituras[j].timestamp < leituras[indx].timestamp){
-                indx = j;
+void ordenar_sensores_alfabetico(Sensores *sensor, int size){
+    for(int i=0; i < size - 1; i++){
+        for(int j = i+1; j < size; j++){
+            if(strcmp(sensor[i].id_sensor, sensor[j].id_sensor) > 0){
+                Sensores temp = sensor[i];
+                sensor[i] = sensor[j];
+                sensor[j] = temp;
             }
         }
-        if(indx != i){
-            temp = leituras[i];
-            leituras[i] = leituras[indx];
-            leituras[indx] = temp;
+    }
+}
+
+void ordenar_sensores_timestamp(Sensores *sensor, int size){
+    for(int i=0; i < size - 1; i++){
+        for(int j = i+1; j < size; j++){
+            if(sensor[i].timestamp > sensor[j].timestamp){
+                Sensores temp = sensor[i];
+                sensor[i] = sensor[j];
+                sensor[j] = temp;
+            }
         }
     }
+}
+
+void salvar_arq(FILE *arquivo, Sensores *sensor, int size){
+    for (int i = 0; i < size; i++){
+        fprintf(arquivo, "%s;%lld;%.2f\n", sensor[i].id_sensor, sensor[i].timestamp, sensor[i].valor);
+    }
+    fclose(arquivo);
+}
+
+void criar_novo_arquivo(int nome_arq, Sensores *sensor, int size){
+    const char *nomes_arquivos[] = { "FLUX.txt", "PRES.txt", "TEMP.txt", "UMID.txt", "VIBR.txt" };
+
+    if (nome_arq < 0 || nome_arq >= 5) {
+        printf("Erro: tipo de sensor inválido.\n");
+        return;
+    }
+
+    FILE *arquivo_saida = fopen(nomes_arquivos[nome_arq], "w");
+    if (arquivo_saida == NULL){
+        printf("Erro ao criar novo arquivo %s.\n", nomes_arquivos[nome_arq]);
+        return;
+    }
+
+    salvar_arq(arquivo_saida, sensor, size);
+    printf("Arquivo (%s) criado com sucesso.\n", nomes_arquivos[nome_arq]);
+}
+
+void continuar_no_switch(){
+    printf("Para continuar, aperte Enter...\n");
+    while (getchar() != '\n');
+}
+
+int posicao_lista_sensores(Sensores *sensor, int size, int inicio){
+    for (int i = inicio + 1; i < size; i++) {
+        if (strcmp(sensor[i].id_sensor, sensor[inicio].id_sensor) != 0) {
+            return i;
+        }
+    }
+    return size;
 }
 
 int main(){
+    int numero_sensores = 5000;
+    int qtd_sensores = 5;
+    int posicao_lista;
+    int inicio = 0;
 
-    FILE *arquivo = fopen("sensores_novo.txt", "r");
-    if (arquivo == NULL){
-        printf("Erro ao abrir arquivo\n");
-        return -1; 
-    }
+    Sensores sensor[numero_sensores];
+    Sensores alfa[numero_sensores];
 
-    Sensores sensores[MAX_LINHAS];
-    int total_sensores =5000;
+    abrir_arquivo("sensores_novo.txt", numero_sensores, sensor);
+    ordenar_sensores_alfabetico(sensor, numero_sensores);
 
-    char linha[MAX_LINHAS];
-    while (fgets(linha, sizeof(linha), arquivo)){
-        long long timestamp;
-        char id_sensor[5];
-        float valor;
+    for(int sensor_atual = 0; sensor_atual < qtd_sensores; sensor_atual++){
+        posicao_lista = posicao_lista_sensores(sensor, numero_sensores, inicio);
+        int p = 0;
 
-        if(sscanf(linha, "%ld;%s;%f", timestamp, id_sensor, valor)==3){
-            int i=encontrar_sensores(sensores, total_sensores, id_sensor);
+        for(int i = inicio; i < posicao_lista; i++){
+            alfa[p++] = sensor[i];
         }
+
+        ordenar_sensores_timestamp(alfa, p);
+        criar_novo_arquivo(sensor_atual, alfa, p);
+
+        inicio = posicao_lista;
+        continuar_no_switch();
+        printf("Programa será finalizado.");
     }
-    fclose(arquivo);
-
-    for(int i=0; i < total_sensores; i++){
-        ordenar_sensores_timestamp(sensores[i].leituras, sensores[i].count);
-
-        char nome_arquvo_novo[5];
-        sprintf(nome_arquvo_novo, "%s.txt", sensores[i].id_sensor);
-
-        FILE *arquivo_saida = fopen (nome_arquvo_novo, "w+");
-        if (arquivo_saida = NULL){
-            printf ("Erro ao tentar gerar novo arquivo");
-            continue;
-        }
-        for(int j=0; j < sensores[i].count; j++){
-            fprintf(arquivo_saida, "%ld;%s;%.2f", sensores[i].leituras[j].timestamp, sensores[i].leituras->valor);
-        }
-        fclose(arquivo_saida);
-    }
-    printf("Arquivos gerados com sucesso!");
-
+    
+    return 0;
 }
