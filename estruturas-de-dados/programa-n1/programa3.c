@@ -41,7 +41,7 @@ int main(){
     scanf("%d", &data.ano);
 
     converterData(data);
-    time_t dia_usuario = converterData(data); // :(
+    time_t dia_usuario = converterData(data);
 
     FILE *arquivo = fopen("sensores_novo.txt", "w");
     if (arquivo == NULL) {
@@ -53,11 +53,11 @@ int main(){
     {
         for (int j =0; j < qtd_leitura_sensores; j++)
         {
-            time_t timestamp = geradorTimestampAleatorio(dia_usuario); // vai gerar o timestamp aleatorio com base na data digitada pelo usuario
+            time_t timestamp = geradorTimestampAleatorio(dia_usuario); 
 
             char *sensores_aleatorio= sensores[rand()% n_sensores];
 
-            float valor = rand() % 100; // valor aleatorio entre 0 - 100
+            float valor = rand() % 100; 
 
             fprintf(arquivo, "%s;%ld;%.2f\n", sensores_aleatorio, timestamp, valor);
         } 
